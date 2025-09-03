@@ -6,7 +6,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
   port: parseInt(process.env.MYSQL_PORT || '3306'),
   username: process.env.MYSQL_USERNAME || 'root',
   password: process.env.MYSQL_PASSWORD || '123456789',
-  database: process.env.MYSQL_DATABASE || 'allinone-backend-test',
+  database: process.env.MYSQL_DATABASE || 'MiniServeHub-services-test',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   // synchronize: process.env.NODE_ENV !== 'production', // 非生产环境自动同步表结构
   synchronize: true, // 生产环境禁用自动同步表结构

@@ -10,7 +10,7 @@ import {
 } from '@/interceptors';
 // import { JwtExpiryGuard } from '@/guards';
 import { databaseConfig } from '@/configs/database.config';
-import { AppConfigModule } from './module/appModule';
+import { AppConfigModule } from './module/app.config.module';
 
 @Module({
   imports: [
