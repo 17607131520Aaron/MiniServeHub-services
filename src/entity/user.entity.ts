@@ -49,6 +49,27 @@ export class User {
   })
   public status: number;
 
+  @Column({
+    type: 'int',
+    default: 0,
+    comment: '登录次数',
+  })
+  public loginCount: number;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: '最后登录时间',
+  })
+  public lastLoginAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: '密码更新时间',
+  })
+  public passwordUpdatedAt: Date;
+
   @CreateDateColumn({
     comment: '创建时间',
   })

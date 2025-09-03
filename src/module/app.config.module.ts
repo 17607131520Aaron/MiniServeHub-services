@@ -32,6 +32,9 @@ export class RedisModule {}
 
 @Module({
   imports: [
+    RabbitMQModule.forRoot(rabbitmqConfig),
+    UserModule,
+    RedisModule,
     ConfigModule,
     TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
@@ -45,17 +48,9 @@ export class RedisModule {}
       }),
     }),
   ],
-  controllers: [],
-  providers: [],
-  exports: [JwtModule],
-})
-export class AuthModule {}
-
-@Module({
-  imports: [RabbitMQModule.forRoot(rabbitmqConfig), UserModule, RedisModule, AuthModule],
   providers: [RabbitMQService],
   controllers: [RabbitMQController],
-  exports: [RabbitMQService],
+  exports: [RabbitMQService, JwtModule],
 })
 //全局APP模块
 export class AppConfigModule {}

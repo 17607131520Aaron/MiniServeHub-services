@@ -18,6 +18,7 @@ export interface IRedisService {
   hget(key: string, field: string): Promise<string | null>;
   hdel(key: string, field: string): Promise<number>;
   hgetall(key: string): Promise<Record<string, string>>;
+  hincrby(key: string, field: string, increment: number): Promise<number>;
 
   // 列表操作
   lpush(key: string, value: string): Promise<number>;
@@ -25,6 +26,7 @@ export interface IRedisService {
   lpop(key: string): Promise<string | null>;
   rpop(key: string): Promise<string | null>;
   lrange(key: string, start: number, stop: number): Promise<string[]>;
+  ltrim(key: string, start: number, stop: number): Promise<'OK'>;
 
   // 集合操作
   sadd(key: string, member: string): Promise<number>;
@@ -37,6 +39,9 @@ export interface IRedisService {
   zrem(key: string, member: string): Promise<number>;
   zrange(key: string, start: number, stop: number): Promise<string[]>;
   zscore(key: string, member: string): Promise<string | null>;
+
+  // 字符串操作
+  incr(key: string): Promise<number>;
 
   // 连接状态检查
   ping(): Promise<string>;

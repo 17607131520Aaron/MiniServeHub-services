@@ -1,6 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -8,7 +7,7 @@ import {
   GlobalResponseWrapperInterceptor,
   HttpExceptionFilter,
 } from '@/interceptors';
-// import { JwtExpiryGuard } from '@/guards';
+import { JwtExpiryGuard } from '@/guards';
 import { databaseConfig } from '@/configs/database.config';
 import { AppConfigModule } from './module/app.config.module';
 
@@ -37,7 +36,7 @@ import { AppConfigModule } from './module/app.config.module';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: 'DEFAULT_SUCCESS_CODE', useValue: 0 },
     { provide: 'DEFAULT_ERROR_CODE', useValue: 9000 },
-    // { provide: APP_GUARD, useClass: JwtExpiryGuard },
+    { provide: APP_GUARD, useClass: JwtExpiryGuard },
   ],
 })
 export class AppModule implements OnModuleInit {

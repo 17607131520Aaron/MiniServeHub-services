@@ -97,6 +97,10 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
     return await this.redisClient.hgetall(key);
   }
 
+  public async hincrby(key: string, field: string, increment: number): Promise<number> {
+    return await this.redisClient.hincrby(key, field, increment);
+  }
+
   // 列表操作
   public async lpush(key: string, value: string): Promise<number> {
     return await this.redisClient.lpush(key, value);
@@ -116,6 +120,10 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
 
   public async lrange(key: string, start: number, stop: number): Promise<string[]> {
     return await this.redisClient.lrange(key, start, stop);
+  }
+
+  public async ltrim(key: string, start: number, stop: number): Promise<'OK'> {
+    return await this.redisClient.ltrim(key, start, stop);
   }
 
   // 集合操作
@@ -150,6 +158,11 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
 
   public async zscore(key: string, member: string): Promise<string | null> {
     return await this.redisClient.zscore(key, member);
+  }
+
+  // 字符串操作
+  public async incr(key: string): Promise<number> {
+    return await this.redisClient.incr(key);
   }
 
   // 连接状态检查
