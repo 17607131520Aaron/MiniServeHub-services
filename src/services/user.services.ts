@@ -1,5 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
@@ -10,7 +11,31 @@ export class UserInfoServiceImpl {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
+
+  public async validateUserAndSignToken(username: string, password: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { username, status: 1 } });
+
+    if (!user) {
+      throw new UnauthorizedException('用户名或密码错误');
+    }
+
+    const isHashMatch = await bcrypt.compare(password, user.password);
+    if (!isHashMatch) {
+      if (user.password === password) {
+        const newHash = await bcrypt.hash(password, 10);
+        user.password = newHash;
+        await this.userRepository.save(user);
+      } else {
+        throw new UnauthorizedException('用户名或密码错误');
+      }
+    }
+
+    const payload = { sub: user.id, username: user.username };
+    const token = await this.jwtService.signAsync(payload);
+    return token;
+  }
 
   public async getUserInfo(): Promise<UserInfoResponseDto> {
     try {
@@ -66,7 +91,14 @@ export class UserInfoServiceImpl {
       });
       if (!user) return '用户名或密码错误';
       const ok = await bcrypt.compare(userInfoDto.password, user.password);
-      return ok ? '登录成功' : '用户名或密码错误';
+      if (ok) {
+        const token = await this.validateUserAndSignToken(
+          userInfoDto.username,
+          userInfoDto.password,
+        );
+        return token;
+      }
+      return '用户名或密码错误';
     } catch (error) {
       throw new BadRequestException('登录失败: ' + (error as Error).message);
     }

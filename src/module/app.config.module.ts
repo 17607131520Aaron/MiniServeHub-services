@@ -1,10 +1,14 @@
 import { Module, Global } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { rabbitmqConfig } from '@/configs/rabbitmq.config';
 import { RabbitMQService } from '@/services/rabbitmq.service';
 import { RabbitMQController } from '@/controller/rabbitmq.controller';
 import { RedisServiceImpl } from '@/services/redis.service';
 import { RedisController } from '@/controller/redis.controller';
+import { User } from '@/entity/user.entity';
 
 import { UserModule } from './user.module';
 
@@ -27,7 +31,28 @@ import { UserModule } from './user.module';
 export class RedisModule {}
 
 @Module({
-  imports: [RabbitMQModule.forRoot(rabbitmqConfig), UserModule, RedisModule],
+  imports: [
+    ConfigModule,
+    TypeOrmModule.forFeature([User]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'dev-secret-change-me',
+        signOptions: {
+          expiresIn: config.get<string>('JWT_EXPIRES_IN') || '1h',
+        },
+      }),
+    }),
+  ],
+  controllers: [],
+  providers: [],
+  exports: [JwtModule],
+})
+export class AuthModule {}
+
+@Module({
+  imports: [RabbitMQModule.forRoot(rabbitmqConfig), UserModule, RedisModule, AuthModule],
   providers: [RabbitMQService],
   controllers: [RabbitMQController],
   exports: [RabbitMQService],
