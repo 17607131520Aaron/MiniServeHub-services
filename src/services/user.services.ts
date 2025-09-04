@@ -52,7 +52,7 @@ export class UserInfoServiceImpl extends BaseEnterpriseLoginService {
 
     const token = await this.jwtService.signAsync(payload);
 
-    // 将 token 存储到 Redis 中，实现企业级功能
+    // 将 token 存储到 Redis 中
     await this.storeTokenInRedis(token, user.id, username);
 
     return token;

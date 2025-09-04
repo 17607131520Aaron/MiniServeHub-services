@@ -5,10 +5,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserController } from '@/controller/user.controller';
 import { UserInfoServiceImpl } from '@/services/user.services';
 import { User } from '@/entity/user.entity';
+import { UserBaseController } from '@/controller/userBase.controller';
+import { UserBasesServices } from '@/services/userBases.services';
+import { UserWx } from '@/entity/userWx.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserWx]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -20,13 +23,14 @@ import { User } from '@/entity/user.entity';
       }),
     }),
   ],
-  controllers: [UserController],
+  controllers: [UserController, UserBaseController],
   providers: [
     {
       provide: 'IUserInfoService',
       useClass: UserInfoServiceImpl,
     },
+    UserBasesServices,
   ],
-  exports: ['IUserInfoService'],
+  exports: ['IUserInfoService', UserBasesServices],
 })
 export class UserModule {}

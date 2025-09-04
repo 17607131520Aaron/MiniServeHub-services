@@ -26,7 +26,12 @@ function extractBearerToken(authHeader?: string): string | null {
 
 function isAuthPublicRequest(request: Request): boolean {
   const url: string = request?.url || '';
-  return url.startsWith('/auth/');
+  if (url.startsWith('/auth/')) return true;
+  // 放行小程序登录/注册接口
+  if (url.startsWith('/userBases/miniProgramLogin')) return true; // 兼容旧接口
+  if (url.startsWith('/userBases/miniProgram/register')) return true;
+  if (url.startsWith('/userBases/miniProgram/login')) return true;
+  return false;
 }
 
 @Injectable()
