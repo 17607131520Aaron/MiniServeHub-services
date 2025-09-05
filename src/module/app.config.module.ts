@@ -11,6 +11,7 @@ import { RedisController } from '@/controller/redis.controller';
 import { User } from '@/entity/user.entity';
 
 import { UserModule } from './user.module';
+import { MiniAppModule } from './miniapp.module';
 
 /**
  * Redis模块
@@ -34,6 +35,7 @@ export class RedisModule {}
   imports: [
     RabbitMQModule.forRoot(rabbitmqConfig),
     UserModule,
+    MiniAppModule,
     RedisModule,
     ConfigModule,
     TypeOrmModule.forFeature([User]),

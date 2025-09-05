@@ -5,8 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserController } from '@/controller/user.controller';
 import { UserInfoServiceImpl } from '@/services/user.services';
 import { User } from '@/entity/user.entity';
-import { UserBaseController } from '@/controller/userBase.controller';
-import { UserBasesServices } from '@/services/userBases.services';
 import { UserWx } from '@/entity/userWx.entity';
 
 @Module({
@@ -23,14 +21,13 @@ import { UserWx } from '@/entity/userWx.entity';
       }),
     }),
   ],
-  controllers: [UserController, UserBaseController],
+  controllers: [UserController],
   providers: [
     {
       provide: 'IUserInfoService',
       useClass: UserInfoServiceImpl,
     },
-    UserBasesServices,
   ],
-  exports: ['IUserInfoService', UserBasesServices],
+  exports: ['IUserInfoService'],
 })
 export class UserModule {}
