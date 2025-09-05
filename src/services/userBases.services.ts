@@ -1,4 +1,9 @@
-import { WechatLoginDto, WechatLoginResponseDto } from '@/dto/userBases.dto';
+import {
+  WechatLoginDto,
+  WechatLoginResponseDto,
+  WechatEncryptedDataDto,
+  WechatUserProfileResponseDto,
+} from '@/dto/userBases.dto';
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -102,6 +107,65 @@ export class UserBasesServices {
     return { openid, session_key: sessionKey };
   }
 
+  /**
+   * 解密微信用户资料（encryptedData + iv），并写回 user_wx
+   */
+  public async decryptAndUpdateProfile(
+    dto: WechatEncryptedDataDto,
+  ): Promise<WechatUserProfileResponseDto> {
+    const { openid, encryptedData, iv } = dto;
+    const user = await this.userWxRepository.findOne({ where: { openid } });
+    if (!user || !user.sessionKey) {
+      throw new UnauthorizedException('会话不存在或已过期，请重新登录');
+    }
+
+    // 解密
+    const sessionKeyBuf = Buffer.from(user.sessionKey, 'base64');
+    const encryptedBuf = Buffer.from(encryptedData, 'base64');
+    const ivBuf = Buffer.from(iv, 'base64');
+
+    const cipher = 'aes-128-cbc';
+    const decipher = await import('node:crypto').then(({ createDecipheriv }) =>
+      createDecipheriv(cipher, sessionKeyBuf, ivBuf),
+    );
+    const decoded = Buffer.concat([decipher.update(encryptedBuf), decipher.final()]).toString(
+      'utf8',
+    );
+    const data = JSON.parse(decoded) as {
+      nickName?: string;
+      avatarUrl?: string;
+      gender?: number;
+      country?: string;
+      province?: string;
+      city?: string;
+      language?: string;
+      openId?: string;
+      unionId?: string;
+      watermark?: { appid?: string };
+    };
+
+    // 写回数据库
+    user.nickname = data.nickName ?? user.nickname;
+    user.avatarUrl = data.avatarUrl ?? user.avatarUrl;
+    if (typeof data.gender === 'number') user.gender = data.gender;
+    user.country = data.country ?? user.country;
+    user.province = data.province ?? user.province;
+    user.city = data.city ?? user.city;
+    user.language = data.language ?? user.language;
+    user.unionid = data.unionId ?? user.unionid;
+    await this.userWxRepository.save(user);
+
+    return {
+      nickname: user.nickname ?? null,
+      avatarUrl: user.avatarUrl ?? null,
+      gender: typeof user.gender === 'number' ? user.gender : null,
+      country: user.country ?? null,
+      province: user.province ?? null,
+      city: user.city ?? null,
+      language: user.language ?? null,
+    };
+  }
+
   private applyOptionalProfile(userWx: UserWx, dto: WechatLoginDto): void {
     if (typeof dto.userId === 'number') userWx.userId = dto.userId;
     if (typeof dto.gender === 'number') userWx.gender = dto.gender;
@@ -139,6 +203,8 @@ export class UserBasesServices {
       throw new BadRequestException(`微信接口错误: ${data.errmsg || data.errcode}`);
     }
     const { openid, session_key: sessionKey, unionid } = data;
+    console.log(data, 'data');
+
     return { openid, sessionKey, unionid };
   }
 

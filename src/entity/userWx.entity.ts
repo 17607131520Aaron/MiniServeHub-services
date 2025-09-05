@@ -13,7 +13,6 @@ export class UserWx {
   @PrimaryGeneratedColumn()
   public id: number;
 
-  @Index({ unique: true })
   @Column({
     type: 'varchar',
     length: 64,
