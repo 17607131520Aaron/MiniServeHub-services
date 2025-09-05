@@ -10,7 +10,7 @@ import {
   WechatUserProfileResponseDto,
 } from '@/dto/userBases.dto';
 import { MiniAppLoginResponseDto, MiniAppUserInfoResponseDto } from '@/dto/miniapp.dto';
-import https from 'node:https';
+import { HttpClientService } from '@/common/http/http-client.service';
 
 interface IWechatSessionResp {
   openid: string;
@@ -26,6 +26,7 @@ export class MiniAppService {
     private readonly config: ConfigService,
     private readonly jwt: JwtService,
     @InjectRepository(UserWx) private readonly userWxRepo: Repository<UserWx>,
+    private readonly http: HttpClientService,
   ) {}
 
   public async register(dto: WechatLoginDto): Promise<MiniAppLoginResponseDto> {
@@ -200,52 +201,9 @@ export class MiniAppService {
       secret,
     )}&js_code=${encodeURIComponent(code)}&grant_type=authorization_code`;
 
-    const data = await this.fetchJsonWithTimeoutRetry<IWechatSessionResp>(url, 3000, 1);
+    const data = await this.http.getJson<IWechatSessionResp>(url, { timeoutMs: 3000, retry: 1 });
     if (data.errcode) throw new BadRequestException(`微信接口错误: ${data.errmsg || data.errcode}`);
     const { openid, session_key: sessionKey, unionid } = data;
     return { openid, sessionKey, unionid };
-  }
-
-  private fetchJsonWithTimeoutRetry<T = unknown>(
-    url: string,
-    timeoutMs: number,
-    retry: number,
-  ): Promise<T> {
-    const tryOnce = (): Promise<T> =>
-      new Promise<T>((resolve, reject) => {
-        const req = https.get(url, (res) => {
-          const status = res.statusCode || 0;
-          if (status < 200 || status >= 300) {
-            reject(new Error(`HTTP ${status}`));
-            return;
-          }
-          const chunks: Buffer[] = [];
-          res.on('data', (d: Buffer) => chunks.push(d));
-          res.on('end', () => {
-            try {
-              const json = JSON.parse(Buffer.concat(chunks).toString('utf8')) as T;
-              resolve(json);
-            } catch (e) {
-              reject(e as Error);
-            }
-          });
-        });
-        req.on('error', (err) => reject(err));
-        req.setTimeout(timeoutMs, () => {
-          req.destroy(new Error('Request timeout'));
-        });
-        req.end();
-      });
-
-    const loop = async (attempts: number): Promise<T> => {
-      try {
-        return await tryOnce();
-      } catch (e) {
-        if (attempts <= 0) throw e;
-        return await loop(attempts - 1);
-      }
-    };
-
-    return loop(retry);
   }
 }
